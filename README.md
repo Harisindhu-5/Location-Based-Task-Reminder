@@ -18,10 +18,9 @@ GeoTasker is a smart, location‑aware task manager that helps you stay on top o
 ## 🚀 Key Features
 
 - **Geofencing** – Create circular "reminder zones" around any address or coordinate.  
-- **Map Integration** – Visualize tasks on an interactive map (Google Maps / Mapbox).  
+- **Map Integration** – Visualize tasks on an interactive map.  
 - **Smart Alerts** – Get notified when you approach or depart a task location.  
-- **Categorization & Filters** – Tag tasks (e.g., Shopping, Work, Home) and filter by tag, date, or distance.  
-- **Sync & Backup** – Optional cloud sync through Firebase / REST API.  
+- **Categorization & Filters** – Tag tasks (e.g., Shopping, Work, Home) and filter by tag, date, or distance.    
 - **Customization** – Set custom reminder radius, notification tone, and working hours.
 
 ---
