@@ -13,11 +13,6 @@ GeoTasker is a smart, location‑aware task manager that helps you stay on top o
   <img src="Location-Tracker/img/src2.jpg" alt="Pending Task Screen" width="300" style="margin: 10px;" />
   <img src="assets/notification.png" alt="Completed Task Screen" width="300" style="margin: 10px;" />
 </div>
-
-1. **Map View**: See all your tasks pinned to real‑world locations.  
-2. **Task List**: Manage and filter tasks by category, due date, or proximity.  
-3. **Geo‑Reminder Notification**: Receive push notifications as you enter or leave a geofence.
-
 ---
 
 ## 🚀 Key Features
