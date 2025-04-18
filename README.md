@@ -11,7 +11,7 @@ GeoTasker is a smart, location‑aware task manager that helps you stay on top o
 <div align="center">
   <img src="img/src1.jpeg" alt="Add Task Screen" width="300" style="margin: 10px;" />
   <img src="img/src2.jpg" alt="Pending Task Screen" width="300" style="margin: 10px;" />
-  <img src="img/src3" alt="Completed Task Screen" width="300" style="margin: 10px;" />
+  <img src="img/src3.jpg" alt="Completed Task Screen" width="300" style="margin: 10px;" />
 </div>
 ---
 
