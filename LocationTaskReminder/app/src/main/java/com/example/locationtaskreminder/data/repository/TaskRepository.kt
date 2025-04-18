@@ -28,4 +28,6 @@ class TaskRepository @Inject constructor(
 
     suspend fun updateTaskCompletionStatus(taskId: Long, completed: Boolean) =
         taskDao.updateTaskCompletionStatus(taskId, completed)
+
+    fun getAllTasks(): Flow<List<Task>> = taskDao.getAllTasks()
 } 

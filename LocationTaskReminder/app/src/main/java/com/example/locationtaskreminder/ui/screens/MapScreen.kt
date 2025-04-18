@@ -14,15 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.*
+import com.example.locationtaskreminder.model.Location
+import com.example.locationtaskreminder.ui.components.GeoapifyMap
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
-    onLocationSelected: (LatLng, Float) -> Unit,
+    onLocationSelected: (Location, Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -48,34 +47,17 @@ fun MapScreen(
         }
     }
 
-    var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
+    var selectedLocation by remember { mutableStateOf<Location?>(null) }
     var radius by remember { mutableStateOf(100f) }
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 15f)
-    }
 
     Box(modifier = modifier.fillMaxSize()) {
-        GoogleMap(
+        GeoapifyMap(
             modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
-            properties = MapProperties(isMyLocationEnabled = hasLocationPermission),
-            onMapClick = { latLng ->
-                selectedLocation = latLng
+            initialLocation = selectedLocation,
+            onLocationSelected = { newLocation ->
+                selectedLocation = newLocation
             }
-        ) {
-            selectedLocation?.let { location ->
-                Circle(
-                    center = location,
-                    radius = radius.toDouble(),
-                    fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                    strokeColor = MaterialTheme.colorScheme.primary
-                )
-                Marker(
-                    state = MarkerState(position = location),
-                    title = "Selected Location"
-                )
-            }
-        }
+        )
 
         Card(
             modifier = Modifier

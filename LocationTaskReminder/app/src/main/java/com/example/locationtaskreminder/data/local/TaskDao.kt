@@ -30,4 +30,7 @@ interface TaskDao {
 
     @Query("UPDATE tasks SET isCompleted = :completed WHERE id = :taskId")
     suspend fun updateTaskCompletionStatus(taskId: Long, completed: Boolean)
+
+    @Query("SELECT * FROM tasks ORDER BY createdAt DESC")
+    fun getAllTasks(): Flow<List<Task>>
 } 

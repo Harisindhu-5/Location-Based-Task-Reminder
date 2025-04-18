@@ -1,158 +1,206 @@
 package com.example.locationtaskreminder.ui.screens
 
+import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.locationtaskreminder.data.model.Task
 import com.example.locationtaskreminder.data.model.TaskCategory
-import com.google.android.gms.maps.model.LatLng
+import com.example.locationtaskreminder.model.Location
+import com.example.locationtaskreminder.ui.components.CategoryDropdown
+import com.example.locationtaskreminder.ui.components.GeoapifyMap
+import com.example.locationtaskreminder.ui.components.MiniMap
+import com.example.locationtaskreminder.ui.viewmodel.TaskViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("MissingPermission")
 @Composable
 fun AddEditTaskScreen(
-    task: Task?,
-    onSaveTask: (String, String, LatLng, Float, String, TaskCategory) -> Unit,
+    task: Task? = null,
+    onSaveTask: (String, String, Location, Float, String, TaskCategory) -> Unit,
     onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
+    viewModel: TaskViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
+    
+    // State variables
     var title by remember { mutableStateOf(task?.title ?: "") }
     var description by remember { mutableStateOf(task?.description ?: "") }
-    var selectedLocation by remember {
-        mutableStateOf<LatLng?>(
-            task?.let { LatLng(it.latitude, it.longitude) }
-        )
+    var radius by remember { mutableStateOf(task?.radius?.toString() ?: "100") } // Default radius in meters
+    var category by remember { mutableStateOf(task?.category ?: TaskCategory.OTHER) }
+    
+    val selectedLocation by viewModel.selectedLocation.collectAsState()
+    val locationAddress by viewModel.locationAddress.collectAsState()
+    val currentLocation by viewModel.currentLocation.collectAsState()
+    
+    // Observe the currentLocation and set selectedLocation if it's null
+    LaunchedEffect(currentLocation) {
+        if (selectedLocation == null && currentLocation != null) {
+            viewModel.useCurrentLocationForTask()
+        }
     }
-    var radius by remember { mutableStateOf(task?.radius ?: 100f) }
+    
+    // Load existing task data if in edit mode
+    LaunchedEffect(task) {
+        if (task != null) {
+            title = task.title
+            description = task.description
+            radius = task.radius.toString()
+            category = task.category
+            viewModel.setSelectedLocation(Location(task.latitude, task.longitude))
+        } else {
+            // For new tasks, request current location refresh
+            viewModel.refreshCurrentLocation()
+        }
+    }
+    
+    // Observe the location address and update locationName
     var locationName by remember { mutableStateOf(task?.locationName ?: "") }
-    var selectedCategory by remember { mutableStateOf(task?.category ?: TaskCategory.HOME) }
-    var showMap by remember { mutableStateOf(false) }
-
-    if (showMap) {
-        MapScreen(
-            onLocationSelected = { location, selectedRadius ->
-                selectedLocation = location
-                radius = selectedRadius
-                showMap = false
+    
+    LaunchedEffect(locationAddress) {
+        locationAddress?.let {
+            locationName = it
+        }
+    }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(scrollState),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Title field
+        OutlinedTextField(
+            value = title,
+            onValueChange = { title = it },
+            label = { Text("Title") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        )
+        
+        // Description field
+        OutlinedTextField(
+            value = description,
+            onValueChange = { description = it },
+            label = { Text("Description") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        )
+        
+        // Location picker
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Select Location", style = MaterialTheme.typography.labelLarge)
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Button to use current location
+        if (currentLocation != null) {
+            Button(
+                onClick = { viewModel.useCurrentLocationForTask() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = "Use current location"
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Use My Current Location")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+        
+        // Geoapify Map for location selection
+        GeoapifyMap(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp),
+            initialLocation = currentLocation,
+            onLocationSelected = { location ->
+                viewModel.setSelectedLocation(location)
             }
         )
-    } else {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(if (task == null) "Add Task" else "Edit Task") },
-                    navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                contentDescription = "Navigate back"
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(
-                            onClick = {
-                                selectedLocation?.let { location ->
-                                    onSaveTask(
-                                        title,
-                                        description,
-                                        location,
-                                        radius,
-                                        locationName,
-                                        selectedCategory
-                                    )
-                                }
-                            },
-                            enabled = title.isNotBlank() && selectedLocation != null && locationName.isNotBlank()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Save,
-                                contentDescription = "Save task"
-                            )
-                        }
-                    }
-                )
-            }
-        ) { padding ->
-            Column(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+        
+        // Radius slider
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Geofence Radius: $radius meters", style = MaterialTheme.typography.labelLarge)
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = radius,
+            onValueChange = { newValue ->
+                if (newValue.isEmpty() || newValue.toFloatOrNull() != null) {
+                    radius = newValue
+                }
+            },
+            label = { Text("Radius (meters)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        )
+        
+        // Category dropdown
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Category", style = MaterialTheme.typography.labelLarge)
+        Spacer(modifier = Modifier.height(8.dp))
+        CategoryDropdown(
+            selectedCategory = category,
+            onCategorySelected = { category = it },
+            modifier = Modifier.fillMaxWidth()
+        )
+        
+        // Action buttons
+        Spacer(modifier = Modifier.height(24.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            OutlinedButton(
+                onClick = onNavigateBack,
+                modifier = Modifier.weight(1f)
             ) {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Title") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3
-                )
-
-                OutlinedTextField(
-                    value = locationName,
-                    onValueChange = { locationName = it },
-                    label = { Text("Location Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                ExposedDropdownMenuBox(
-                    expanded = false,
-                    onExpandedChange = {},
-                ) {
-                    OutlinedTextField(
-                        value = selectedCategory.name,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Category") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    DropdownMenu(
-                        expanded = false,
-                        onDismissRequest = {},
-                    ) {
-                        TaskCategory.values().forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(category.name) },
-                                onClick = { selectedCategory = category }
-                            )
-                        }
+                Text("Cancel")
+            }
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Button(
+                onClick = {
+                    val selectedLoc = selectedLocation ?: currentLocation
+                    if (title.isNotBlank() && selectedLoc != null) {
+                        val radiusValue = radius.toFloatOrNull() ?: 100f
+                        onSaveTask(
+                            title,
+                            description,
+                            selectedLoc,
+                            radiusValue,
+                            locationName,
+                            category
+                        )
+                    } else {
+                        // Show error if required fields are missing
+                        Log.d("AddEditTaskScreen", "Missing required fields: title=${title.isNotBlank()}, location=${selectedLoc != null}")
                     }
-                }
-
-                Button(
-                    onClick = { showMap = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        if (selectedLocation == null) "Select Location"
-                        else "Change Location"
-                    )
-                }
-
-                selectedLocation?.let { location ->
-                    Text(
-                        "Selected Location: ${location.latitude}, ${location.longitude}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        "Radius: ${radius.toInt()} meters",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(if (task == null) "Add Task" else "Update Task")
             }
         }
+        
+        Spacer(modifier = Modifier.height(16.dp))
     }
 } 

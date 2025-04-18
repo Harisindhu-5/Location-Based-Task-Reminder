@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.locationtaskreminder.data.model.Task
+import com.example.locationtaskreminder.model.Location
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +29,7 @@ fun TaskItem(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .animateContentSize(),
+            .animateContentSize()
     ) {
         Column(
             modifier = Modifier
@@ -47,11 +48,14 @@ fun TaskItem(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-                IconButton(onClick = { expanded = !expanded }) {
-                    Icon(
-                        imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (expanded) "Show less" else "Show more"
-                    )
+                
+                Row {
+                    IconButton(onClick = { expanded = !expanded }) {
+                        Icon(
+                            imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = if (expanded) "Show less" else "Show more"
+                        )
+                    }
                 }
             }
 
@@ -69,6 +73,14 @@ fun TaskItem(
                 Text(
                     text = "Category: ${task.category}",
                     style = MaterialTheme.typography.bodySmall
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                MiniMap(
+                    location = Location(task.latitude, task.longitude),
+                    radius = task.radius,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(

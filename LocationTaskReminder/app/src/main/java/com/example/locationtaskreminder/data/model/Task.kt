@@ -23,4 +23,4 @@ enum class TaskCategory {
     WORK,
     SHOPPING,
     OTHER
-} 
+}
